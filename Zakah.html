@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="app_title">حاسبة الزكاة</title>
+  <script src="https://unpkg.com/i18next@21.6.4/i18next.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f2f4f7;
+      color: #333;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .container {
+      background: #fff;
+      max-width: 400px;
+      margin: auto;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin-bottom: 20px;
+      color: #007b83;
+    }
+    select, input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background-color: #007b83;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background-color: #005e66;
+    }
+    #zakat-result {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #2b7a78;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 data-i18n="zakat_calculator">حاسبة الزكاة</h1>
+
+    <label for="lang" data-i18n="select_language">اختر اللغة</label>
+    <select id="lang" onchange="changeLanguage(this.value)">
+      <option value="ar">العربية</option>
+      <option value="en">English</option>
+    </select>
+
+    <label for="amount" data-i18n="enter_amount">أدخل المبلغ</label>
+    <input type="number" id="amount" placeholder="مثال: 10000" />
+
+    <label for="zakat_type" data-i18n="select_zakat_type">اختر نوع الزكاة</label>
+    <select id="zakat_type">
+      <option value="maal">زكاة المال</option>
+      <option value="fitr">زكاة الفطر</option>
+    </select>
+
+    <button onclick="calculateZakat()" data-i18n="calculate_zakat">احسب الزكاة</button>
+    <button onclick="printResult()" data-i18n="print_result">طباعة النتيجة</button>
+    <button onclick="shareResult()" data-i18n="share_result">مشاركة النتيجة</button>
+
+    <div id="zakat-result">
+      <p><span data-i18n="zakat_amount">مقدار الزكاة:</span> <span id="zakat"></span></p>
+    </div>
+
+    <p data-i18n="zakat_info">يتم حساب الزكاة بنسبة 2.5٪ من المال الذي بلغ النصاب ومر عليه الحول.</p>
+  </div>
+
+  <script>
+    const resources = {
+      en: {
+        translation: {
+          "app_title": "Zakat Calculator",
+          "zakat_calculator": "Zakat Calculator",
+          "select_language": "Select Language",
+          "enter_amount": "Enter amount",
+          "select_zakat_type": "Select Zakat Type",
+          "calculate_zakat": "Calculate Zakat",
+          "print_result": "Print Result",
+          "share_result": "Share Result",
+          "zakat_amount": "Zakat Amount:",
+          "zakat_info": "Zakat is 2.5% of savings that reached the nisab and a year has passed."
+        }
+      },
+      ar: {
+        translation: {
+          "app_title": "حاسبة الزكاة",
+          "zakat_calculator": "حاسبة الزكاة",
+          "select_language": "اختر اللغة",
+          "enter_amount": "أدخل المبلغ",
+          "select_zakat_type": "اختر نوع الزكاة",
+          "calculate_zakat": "احسب الزكاة",
+          "print_result": "طباعة النتيجة",
+          "share_result": "مشاركة النتيجة",
+          "zakat_amount": "مقدار الزكاة:",
+          "zakat_info": "يتم حساب الزكاة بنسبة 2.5٪ من المال الذي بلغ النصاب ومر عليه الحول."
+        }
+      }
+    };
+
+    i18next.init({
+      lng: 'ar',
+      resources
+    }, updateContent);
+
+    function updateContent() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.innerText = i18next.t(el.getAttribute('data-i18n'));
+      });
+      document.documentElement.lang = i18next.language;
+    }
+
+    function changeLanguage(lng) {
+      i18next.changeLanguage(lng, updateContent);
+    }
+
+    function calculateZakat() {
+      const amount = parseFloat(document.getElementById("amount").value);
+      const zakatType = document.getElementById("zakat_type").value;
+
+      if (isNaN(amount) || amount <= 0) {
+        alert("يرجى إدخال مبلغ صالح.");
+        return;
+      }
+
+      let zakat = 0;
+
+      if (zakatType === "maal") {
+        const goldPricePerGram = 404.86; // تحديث السعر يوميًا
+        const nisab = 85 * goldPricePerGram;
+
+        if (amount < nisab) {
+          alert("المبلغ أقل من النصاب، لا تجب الزكاة.");
+          document.getElementById("zakat").innerText = "0.00";
+          return;
+        }
+
+        zakat = amount * 0.025;
+      } else if (zakatType === "fitr") {
+        zakat = 15; // قيمة زكاة الفطر
+      }
+
+      document.getElementById("zakat").innerText = zakat.toFixed(2) + " ريال";
+
+      localStorage.setItem("amount", amount);
+      localStorage.setItem("zakat", zakat.toFixed(2));
+      localStorage.setItem("zakatType", zakatType);
+    }
+
+    function printResult() {
+      window.print();
+    }
+
+    function shareResult() {
+      const amount = localStorage.getItem("amount");
+      const zakat = localStorage.getItem("zakat");
+      const message = `المبلغ: ${amount} ريال\nالزكاة المستحقة: ${zakat} ريال`;
+      if (navigator.share) {
+        navigator.share({
+          title: 'نتيجة حساب الزكاة',
+          text: message
+        });
+      } else {
+        alert("المتصفح لا يدعم ميزة المشاركة.");
+      }
+    }
+
+    window.onload = function() {
+      const savedAmount = localStorage.getItem("amount");
+      const savedZakat = localStorage.getItem("zakat");
+      const savedZakatType = localStorage.getItem("zakatType");
+
+      if (savedAmount && savedZakat && savedZakatType) {
+        document.getElementById("amount").value = savedAmount;
+        document.getElementById("zakat_type").value = savedZakatType;
+        document.getElementById("zakat").innerText = savedZakat + " ريال";
+      }
+    };
+  </script>
+</body>
+</html>
